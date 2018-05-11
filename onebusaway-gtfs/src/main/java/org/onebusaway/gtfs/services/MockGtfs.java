@@ -15,26 +15,16 @@
  */
 package org.onebusaway.gtfs.services;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.onebusaway.gtfs.serialization.GtfsReader;
 import org.onebusaway.gtfs.serialization.mappings.StopTimeFieldMappingFactory;
+
+import java.io.*;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class MockGtfs {
 
@@ -161,6 +151,43 @@ public class MockGtfs {
     b.addColumnSpec("stop_lon", stopLons);
 
     b.addColumnSpecs(columns);
+    putFile("stops.txt", b.build());
+  }
+
+  public void putStopsWithStopDesc (){
+    TableBuilder b = new TableBuilder(3);
+
+    List<String> stopIds = new ArrayList<>();
+    stopIds.add("s1");
+    stopIds.add("s2");
+    stopIds.add("s3");
+
+    List<String> stopNames = new ArrayList<>();
+    stopNames.add("Stop1");
+    stopNames.add("Stop2");
+    stopNames.add("Stop3");
+
+    List<String> stopDescs = new ArrayList<>();
+    stopDescs.add("Stop1");
+    stopDescs.add("Stop2");
+    stopDescs.add("Desc3");
+
+      List<String> stopLats = new ArrayList<String>();
+      List<String> stopLons = new ArrayList<String>();
+      for (int i = 0; i < 3; ++i) {
+          double lat = 47.65383950857904 + 0.004 * i;
+          double lon = -122.30782950811766;
+          stopLats.add(Double.toString(lat));
+          stopLons.add(Double.toString(lon));
+      }
+      b.addColumnSpec("stop_lat", stopLats);
+      b.addColumnSpec("stop_lon", stopLons);
+
+
+    b.addColumnSpec("stop_id", stopIds);
+    b.addColumnSpec("stop_name", stopNames);
+    b.addColumnSpec("stop_desc", stopDescs);
+
     putFile("stops.txt", b.build());
   }
 
