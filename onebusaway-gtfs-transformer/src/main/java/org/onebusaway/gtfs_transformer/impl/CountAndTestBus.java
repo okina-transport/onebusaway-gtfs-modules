@@ -15,24 +15,19 @@
  */
 package org.onebusaway.gtfs_transformer.impl;
 
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Trip;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.Stop;
+import org.onebusaway.cloud.api.ExternalServices;
+import org.onebusaway.cloud.api.ExternalServicesBridgeFactory;
+import org.onebusaway.gtfs.impl.calendar.CalendarServiceDataFactoryImpl;
+import org.onebusaway.gtfs.model.*;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.onebusaway.gtfs.services.GtfsMutableRelationalDao;
+import org.onebusaway.gtfs.services.calendar.CalendarService;
 import org.onebusaway.gtfs_transformer.services.GtfsTransformStrategy;
 import org.onebusaway.gtfs_transformer.services.TransformContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.io.Writer;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.FileOutputStream;
-
-import java.io.IOException;
+import java.util.*;
 
 public class CountAndTestBus implements GtfsTransformStrategy {
 
@@ -46,6 +41,9 @@ public class CountAndTestBus implements GtfsTransformStrategy {
     @Override
     public void run(TransformContext context, GtfsMutableRelationalDao dao) {
         GtfsMutableRelationalDao reference = (GtfsMutableRelationalDao) context.getReferenceReader().getEntityStore();
+        CalendarService refCalendarService = CalendarServiceDataFactoryImpl.createService(reference);
+        String agency = dao.getAllTrips().iterator().next().getId().getAgencyId();
+        String name = dao.getAllAgencies().iterator().next().getName();
 
         HashMap<String, Route> referenceRoutes = new HashMap<>();
         for (Route route : reference.getAllRoutes()) {
@@ -73,13 +71,159 @@ public class CountAndTestBus implements GtfsTransformStrategy {
         }
         _log.info("ATIS Routes: {}, References: {}, ATIS match to reference: {}", dao.getAllRoutes().size(), reference.getAllRoutes().size(), matches);
 
+        int countSt = 0;
+        int countCd = 0;
+
+        int countNoSt = 0;
+        int countNoCd = 0;
+        int curSerTrips = 0;
+        int countNoHs = 0;
+
+        int atisTripsThisWeek = 0;
+        int refTripsThisWeek = 0;
+        int matchingTripsThisWeek = 0;
+
+        AgencyAndId serviceAgencyAndId = new AgencyAndId();
         matches = 0;
+        List<String> matchingIds = new ArrayList<String>();
+        List<String> matchingIdsThisWeek = new ArrayList<String>();
+        //_log.info("ATIS trips that don't have a match in reference: ");
         for (Trip trip : dao.getAllTrips()) {
-            if (referenceTrips.containsKey(trip.getId().getId())) {
-                matches++;
+            if (trip.getId().getId() != null) {
+                if (referenceTrips.containsKey(trip.getId().getId())) {
+                    matches++;
+                    matchingIds.add(trip.getId().getId());
+                }
+                else {
+                    //_log.info(trip.getId().getId());
+                }
+                if (tripIsThisWeek(dao.getCalendarDatesForServiceId(trip.getServiceId()))) {
+                    atisTripsThisWeek++;
+                    if (referenceTrips.containsKey(trip.getId().getId())) {
+                        //ATIS trips this week that match a reference trip (reference trip may not be this week, check this further down)
+                        matchingIdsThisWeek.add(trip.getId().getId());
+                    }
+                }
+            }
+
+            if (dao.getStopTimesForTrip(trip).size() == 0) {
+                countNoSt++;
+            }
+            else {
+                countSt++;
+            }
+
+            serviceAgencyAndId = trip.getServiceId();
+            if (dao.getCalendarDatesForServiceId(serviceAgencyAndId).size() == 0) {
+                countNoCd++;
+            }
+            else {
+                countCd++;
+            }
+
+            //check for current service
+            for (ServiceCalendarDate calDate : dao.getCalendarDatesForServiceId(trip.getServiceId())) {
+                Date date = constructDate(calDate.getDate());
+                Date today = removeTime(new Date());
+                if (calDate.getExceptionType() == 1 && date.equals(today)) {
+                    curSerTrips++;
+                    break;
+                }
+            }
+
+            if (trip.getTripHeadsign() == null) {
+                countNoHs++;
+            }
+
+            //compare ATIS and Reference trips *this week*
+            if (trip.getId().getId() != null) {
+                if (referenceTrips.containsKey(trip.getId().getId())) {
+                    matches++;
+                    matchingIds.add(trip.getId().getId());
+                }
+                else {
+                    //_log.info(trip.getId().getId());
+                }
             }
         }
-        _log.info("ATIS Trips: {}, Reference: {}, ATIS match to reference: {}", dao.getAllTrips().size(), reference.getAllTrips().size(), matches);
+
+        //MOTP-1060 Number of trips in reference GTFS that don't appear in mta_trip_id in ATIS
+        //for each reference trip
+        int noMatch = 0;
+        int noMatchNoSdon = 0;
+        int noMatchNoSdonNoH9 = 0;
+        int refTripsWithSdon = 0;
+        int refTripsWoutSdonWithh9 = 0;
+        int refTripsThisWeekWithSdon = 0;
+        int refTripsThisWeekWoutSdonWithA9 = 0;
+        int refTripsThisWeekWoutSdonWithE9 = 0;
+        int refTripsThisWeekWoutSdonWithB9 = 0;
+        int checkMatchesThisWeek = 0;
+        int doesntMatchThisWeek = 0;
+        int leftOverNoMatchThisWeek = 0;
+        List<String> refTripsMissingATIS = new ArrayList<String>();
+        _log.info("Ref trips that don't match atis and aren't SDon: ");
+        for (Trip refTrip : reference.getAllTrips()) {
+            //count number of reference trips this week
+            Set<ServiceDate> activeDates = refCalendarService.getServiceDatesForServiceId(refTrip.getServiceId());
+
+            if (tripIsThisWeek(activeDates)) {
+                refTripsThisWeek++;
+                if (!matchingIdsThisWeek.contains(refTrip.getId().getId())) {
+                    doesntMatchThisWeek++;
+                    if (refTrip.getId().getId().contains("SDon")) {
+                        refTripsThisWeekWithSdon++;
+                    } else if (refTrip.getId().getId().contains("A9")) {
+                        refTripsThisWeekWoutSdonWithA9++;
+                    } else if (refTrip.getId().getId().contains("E9")) {
+                        refTripsThisWeekWoutSdonWithE9++;
+                    }
+                    else if (refTrip.getId().getId().contains("B9")) {
+                        refTripsThisWeekWoutSdonWithB9++;
+                    }
+                    else {
+                        leftOverNoMatchThisWeek++;
+                        _log.info(refTrip.getId().getId());
+                    }
+                } else {
+                    matchingTripsThisWeek++;
+                    //the number of ATIS trips this week that match with a reference trip
+                    //that is also this week
+                }
+            }
+
+
+            if (!matchingIds.contains(refTrip.getId().getId())) {
+                //_log.info(refTrip.getId().getId());
+                refTripsMissingATIS.add(refTrip.getId().getId());
+                noMatch++;
+                if (!refTrip.getId().getId().contains("SDon")) {
+                    noMatchNoSdon++;
+                    if (!refTrip.getId().getId().contains("H9")) {
+                        //_log.info(refTrip.getId().getId());
+                        noMatchNoSdonNoH9++;
+                    }
+                    //No Sdon, has H9
+                    else {
+                        refTripsWoutSdonWithh9++;
+                    }
+                }
+                //has SDon
+                else {
+                    refTripsWithSdon++;
+                }
+            }
+        }
+
+        _log.info("ATIS Trips: {}, Reference: {}, match: {}, In ref NotInATIS: {}, In ref NotInATIS Sdon: {}, In ref NotInATIS not Sdon is H9: {}, Current Service: {}", dao.getAllTrips().size(), reference.getAllTrips().size(), matches, noMatch, refTripsWithSdon, refTripsWoutSdonWithh9, curSerTrips);
+        _log.info("ATIS Trips this week {}, Reference trips this week {}, ATIS Trips this week that are also Reference Trips this week {}", atisTripsThisWeek, refTripsThisWeek, matchingTripsThisWeek);
+        _log.info("Matches this week {}", matchingTripsThisWeek);
+        _log.info("This week matches: {}. This week doesn't match {}, in ref NotInATIS Sdon: {}, In ref NotInATIS not Sdon is A9: {}, E9: {}, B9: {} Leftover: {}",
+                matchingTripsThisWeek, doesntMatchThisWeek, refTripsThisWeekWithSdon, refTripsThisWeekWoutSdonWithA9, refTripsThisWeekWoutSdonWithE9, refTripsThisWeekWoutSdonWithB9, leftOverNoMatchThisWeek);
+
+        _log.info("Stops: {}, Stop times {}, Trips w/ st: {}, Trips w/out st: {}", dao.getAllStops().size(), dao.getAllStopTimes().size(), countSt, countNoSt);
+        _log.info("Calendar dates: {}, Trips w/cd {}, Trips w/out cd: {}", dao.getAllCalendarDates().size(), countCd, countNoCd);
+        _log.info("Total trips w/out headsign: {}", countNoHs);
 
         matches = 0;
         for (Stop stop : dao.getAllStops()) {
@@ -89,133 +233,110 @@ public class CountAndTestBus implements GtfsTransformStrategy {
         }
         _log.info("ATIS Stops: {}, Reference: {}, ATIS match to reference: {}", dao.getAllStops().size(), reference.getAllStops().size(), matches);
 
-        /* The following code is for counting bus trips, looking at what matches between the ATIS
-        * and reference files and taking into consideration the Sdon trips in the reference file
-        * Also prints out the trips that don't match
-        *
+        ExternalServices es =  new ExternalServicesBridgeFactory().getExternalServices();
+        es.publishMetric(getNamespace(), "ATISBusTripsThisWeek", null, null, atisTripsThisWeek);
+        es.publishMetric(getNamespace(), "refBusTripsThisWeek", null, null, refTripsThisWeek);
+        es.publishMetric(getNamespace(), "matchingBusTripsThisWeek", null, null, matchingTripsThisWeek);
 
-        int sdonRef=0;
-        int minusSdonRef=0;
-        int minusSdonAtis=0;
+        if (curSerTrips < 1) {
+            es.publishMessage(getTopic(), "Agency: "
+                    + agency
+                    + " "
+                    + name
+                    + " has no current service!");
+            throw new IllegalStateException(
+                    "There is no current service!!");
+        }
 
-        ArrayList<String> refsToRemove = new ArrayList<>();
-        ArrayList<String> ATISToRemove = new ArrayList<>();
+        if (countNoHs > 0) {
+            es.publishMessage(getTopic(), "Agency: "
+                    + agency
+                    + " "
+                    + name
+                    + " has trips w/out headsign: "
+                    + countNoHs);
+            es.publishMetric(getNamespace(), "noHeadsigns", null, null, countNoHs);
+            _log.error("There are trips with no headsign");
+        }
 
-        for (HashMap.Entry<String, Trip> referenceTrip : referenceTrips.entrySet()) {
-            Trip refTrip = referenceTrip.getValue();
-            if (refTrip.getId().getId().contains("SDon")) {
-                sdonRef++;
-                String refId = refTrip.getId().getId();
-                refsToRemove.add(refId);
-                String refIdMinusSDon = refId.replace("-SDon", "");
-                if(referenceTrips.containsKey(refIdMinusSDon)) {
-                    minusSdonRef++;
-                    refsToRemove.add(refIdMinusSDon);
-                }
-                if (atisTrips.containsKey(refIdMinusSDon)) {
-                   minusSdonAtis++;
-                   ATISToRemove.add(refIdMinusSDon);
-                }
+        HashSet<String> ids = new HashSet<String>();
+        for (Stop stop : dao.getAllStops()) {
+            //check for duplicate stop ids.
+            if (ids.contains(stop.getId().getId())) {
+                _log.error("Duplicate stop ids! Agency {} stop id {}", agency, stop.getId().getId());
+                es.publishMessage(getTopic(), "Agency: "
+                        + agency
+                        + " "
+                        + name
+                        + " has duplicate stop id: "
+                        + stop.getId());
+                throw new IllegalStateException(
+                        "There are duplicate stop ids!");
+            }
+            else {
+                ids.add(stop.getId().getId());
             }
         }
+    }
 
-        for (String toRemove : refsToRemove) {
-            referenceTrips.remove(toRemove);
-        }
-
-        for (String toRemove : ATISToRemove) {
-            atisTrips.remove(toRemove);
-        }
-
-        _log.info("Sdon in ref: {}, minusSdon in ref: {}, minusSdon in ATIS: {}", sdonRef, minusSdonRef, minusSdonAtis);
-        _log.info("Total ATIS Trips: {} and {}", dao.getAllTrips().size(), atisTrips.size());
-        _log.info("Total Ref Trips: {} and {}", reference.getAllTrips().size(), referenceTrips.size());
-
-        int inBoth=0;
-        ArrayList<String> inBothLists = new ArrayList<>();
-
-        for (HashMap.Entry<String, Trip> referenceTrip : referenceTrips.entrySet()) {
-            if(atisTrips.containsKey(referenceTrip.getKey())) {
-                inBoth++;
-                inBothLists.add(referenceTrip.getKey());
+    private boolean tripIsThisWeek(Set<ServiceDate> serviceDates) {
+        Date today = removeTime(new Date());
+        Date inOneWeek = removeTime(addDays(new Date(), 7));
+        for (ServiceDate calDate : serviceDates) {
+            Date date = removeTime(calDate.getAsDate());
+            if (date.after(today) && date.before(inOneWeek)) {
+                return true;
             }
-
         }
-        _log.info("In both {}", inBoth);
+        return false;
+    }
 
-        for (String toRemove : inBothLists) {
-            referenceTrips.remove(toRemove);
-        }
+    private boolean tripIsThisWeek(List<ServiceCalendarDate> serviceDates) {
+        Date today = removeTime(new Date());
+        Date inOneWeek = removeTime(addDays(new Date(), 7));
+        for (ServiceCalendarDate calDate : serviceDates) {
+            Date date = constructDate(calDate.getDate());
+            if (calDate.getExceptionType() == 1 && date.after(today) && date.before(inOneWeek)) {
+                return true;
 
-        for (String toRemove : inBothLists) {
-            atisTrips.remove(toRemove);
-        }
-
-        _log.info("Total ATIS Trips: {} and {}", dao.getAllTrips().size(), atisTrips.size());
-        _log.info("Total Ref Trips: {} and {}", reference.getAllTrips().size(), referenceTrips.size());
-
-
-        //write out remaining to files
-        ArrayList<String> daoTripList = new ArrayList<String>();
-
-        int inDaoNotRef = 0;
-        int inboth = 0;
-        int inRefNotDao = 0;
-        int daoTrips = 0;
-        int refTrips = 0;
-
-        Writer writer = null;
-        try {
-            writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream("filename.txt"), "utf-8"));
-            writer.write("Trips in ATIS not Reference\n");
-            for (Trip trip: dao.getAllTrips()) {
-                daoTrips++;
-                daoTripList.add(trip.getId().getId());
-                if (referenceTrips.get(trip.getId().getId()) == null){
-                    inDaoNotRef++;
-                    String line = trip.getId().getId() + "\n";
-                    writer.write(line);
-                }
-                else {
-                    inboth++;
-                }
             }
-        } catch (IOException ex) {
-            // Report
-        } finally {
-            try {writer.close();} catch (Exception ex) { }
         }
+        return false;
+    }
 
-        _log.info("Dao trips: {}", daoTrips);
-        _log.info("In DaoNotRef: {} in both: {}", inDaoNotRef, inboth);
+    private Date addDays(Date date, int daysToAdd) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.DATE, daysToAdd);
+        return cal.getTime();
+    }
 
-        inboth = 0;
+    private Date removeTime(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        date = calendar.getTime();
+        return date;
+    }
 
-        Writer writer2 = null;
-        try {
-            writer2 = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream("filename2.txt"), "utf-8"));
-            writer2.write("Trips in Reference not in ATIS\n");
-            for (HashMap.Entry<String, Trip> refTrip : referenceTrips.entrySet()) {
-                refTrips++;
-                if (daoTripList.contains(refTrip.getKey())){
-                    inboth++;
-                } else {
-                    String line = refTrip.getValue().getId().getId() + "\n";
-                    writer2.write(line);
-                    inRefNotDao++;
-                }
-            }
-        } catch (IOException ex) {
-            // Report
-        } finally {
-            try {writer2.close();} catch (Exception ex) { }
-        }
+    private Date constructDate(ServiceDate date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.YEAR, date.getYear());
+        calendar.set(Calendar.MONTH, date.getMonth()-1);
+        calendar.set(Calendar.DATE, date.getDay());
+        Date date1 = calendar.getTime();
+        date1 = removeTime(date1);
+        return date1;
+    }
 
-        _log.info("Ref trips: {}", refTrips);
-        _log.info("In RefNotDao: {} in both: {}", inRefNotDao, inboth);
-    */
+    private String getTopic() {
+        return System.getProperty("sns.topic");
+    }
 
+    private String getNamespace() {
+        return System.getProperty("cloudwatch.namespace");
     }
 }

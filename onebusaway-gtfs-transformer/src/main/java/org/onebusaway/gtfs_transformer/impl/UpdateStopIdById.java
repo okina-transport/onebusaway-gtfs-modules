@@ -16,6 +16,8 @@
 
 package org.onebusaway.gtfs_transformer.impl;
 
+import org.onebusaway.cloud.api.ExternalServices;
+import org.onebusaway.cloud.api.ExternalServicesBridgeFactory;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.services.GtfsMutableRelationalDao;
@@ -48,14 +50,19 @@ public class UpdateStopIdById implements GtfsTransformStrategy {
         }
 
         ArrayList<Stop> stopsToDelete = new ArrayList<>();
-
         ArrayList<String> existingStops = new ArrayList<>();
+        ExternalServices es =  new ExternalServicesBridgeFactory().getExternalServices();
 
         for (Stop stop : dao.getAllStops()) {
             if (stop.getMtaStopId() != null) {
                 if (existingStops.contains(stop.getMtaStopId())) {
-                    //throw exception ?
-                    _log.error("*** MtaStopId {} already exists", stop.getMtaStopId());
+                    es.publishMessage(getTopic(), "Agency: "
+                            + dao.getAllAgencies().iterator().next().getId()
+                            + " "
+                            + dao.getAllAgencies().iterator().next().getName()
+                            + " has duplicate stop id: "
+                            + stop.getMtaStopId());
+                    _log.info("MtaStopId {} already exists", stop.getMtaStopId());
                     stopsToDelete.add(stop);
                 }
                 else {
@@ -72,5 +79,13 @@ public class UpdateStopIdById implements GtfsTransformStrategy {
             removeEntityLibrary.removeStop(dao, stop);
         }
 
+    }
+
+    private String getTopic() {
+        return System.getProperty("sns.topic");
+    }
+
+    private String getNamespace() {
+        return System.getProperty("cloudwatch.namespace");
     }
 }
