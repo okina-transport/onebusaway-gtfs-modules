@@ -32,13 +32,17 @@ public final class FareProduct extends IdentityBean<AgencyAndId> {
   @CsvField(name = "fare_product_id", mapping = DefaultAgencyIdFieldMappingFactory.class)
   private AgencyAndId fareProductId;
 
-  @CsvField(optional = true, name = "fare_product_name")
+  @CsvField(optional = true, name = "fare_product_name", alwaysIncludeInOutput = true)
   private String name;
 
-  @CsvField(name = "amount", optional = false, mapping = FareAmountFieldMappingFactory.class)
+  @CsvField(
+      name = "amount",
+      mapping = FareAmountFieldMappingFactory.class,
+      alwaysIncludeInOutput = true)
   private float amount = MISSING_VALUE;
 
-  @CsvField private String currency;
+  @CsvField(name = "currency", alwaysIncludeInOutput = true)
+  private String currency;
 
   @CsvField(optional = true)
   private int durationAmount = MISSING_VALUE;
@@ -49,10 +53,18 @@ public final class FareProduct extends IdentityBean<AgencyAndId> {
   @CsvField(optional = true)
   private int durationType = MISSING_VALUE;
 
-  @CsvField(name = "rider_category_id", optional = true, mapping = EntityFieldMappingFactory.class)
+  @CsvField(
+      name = "rider_category_id",
+      optional = true,
+      mapping = EntityFieldMappingFactory.class,
+      alwaysIncludeInOutput = true)
   private RiderCategory riderCategory;
 
-  @CsvField(name = "fare_media_id", optional = true, mapping = EntityFieldMappingFactory.class)
+  @CsvField(
+      name = "fare_media_id",
+      optional = true,
+      mapping = EntityFieldMappingFactory.class,
+      alwaysIncludeInOutput = true)
   private FareMedium fareMedium;
 
   public AgencyAndId getFareProductId() {

@@ -26,10 +26,11 @@ public final class FareMedium extends IdentityBean<AgencyAndId> {
   @CsvField(name = "fare_media_id", mapping = DefaultAgencyIdFieldMappingFactory.class)
   private AgencyAndId id;
 
-  @CsvField(name = "fare_media_name", optional = true)
+  @CsvField(name = "fare_media_name", optional = true, alwaysIncludeInOutput = true)
   private String name;
 
-  @CsvField private int fareMediaType;
+  @CsvField(name = "fare_media_type", alwaysIncludeInOutput = true)
+  private int fareMediaType;
 
   @CsvField(name = "rider_category_id", optional = true, mapping = EntityFieldMappingFactory.class)
   private RiderCategory riderCategory;

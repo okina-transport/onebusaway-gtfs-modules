@@ -28,16 +28,25 @@ public final class FareLegRule extends IdentityBean<String> {
   @CsvField(
       optional = true,
       name = "leg_group_id",
-      mapping = DefaultAgencyIdFieldMappingFactory.class)
+      mapping = DefaultAgencyIdFieldMappingFactory.class,
+      alwaysIncludeInOutput = true)
   private AgencyAndId legGroupId;
 
-  @CsvField(optional = true, name = "network_id")
+  @CsvField(optional = true, name = "network_id", alwaysIncludeInOutput = true)
   private String networkId;
 
-  @CsvField(optional = true, name = "from_area_id", mapping = EntityFieldMappingFactory.class)
+  @CsvField(
+      optional = true,
+      name = "from_area_id",
+      mapping = EntityFieldMappingFactory.class,
+      alwaysIncludeInOutput = true)
   private Area fromArea;
 
-  @CsvField(optional = true, name = "to_area_id", mapping = EntityFieldMappingFactory.class)
+  @CsvField(
+      optional = true,
+      name = "to_area_id",
+      mapping = EntityFieldMappingFactory.class,
+      alwaysIncludeInOutput = true)
   private Area toArea;
 
   @CsvField(name = "min_distance", optional = true)
@@ -49,22 +58,27 @@ public final class FareLegRule extends IdentityBean<String> {
   @CsvField(name = "distance_type", optional = true)
   private Integer distanceType;
 
-  @CsvField(name = "fare_product_id", mapping = DefaultAgencyIdFieldMappingFactory.class)
+  @CsvField(
+      name = "fare_product_id",
+      mapping = DefaultAgencyIdFieldMappingFactory.class,
+      alwaysIncludeInOutput = true)
   private AgencyAndId fareProductId;
 
-  @CsvField(name = "rule_priority", optional = true)
+  @CsvField(name = "rule_priority", optional = true, alwaysIncludeInOutput = true)
   private int rulePriority = NO_RULE_PRIORITY;
 
   @CsvField(
       name = "from_timeframe_group_id",
       optional = true,
-      mapping = DefaultAgencyIdFieldMappingFactory.class)
+      mapping = DefaultAgencyIdFieldMappingFactory.class,
+      alwaysIncludeInOutput = true)
   private AgencyAndId fromTimeframeGroupId;
 
   @CsvField(
       name = "to_timeframe_group_id",
       optional = true,
-      mapping = DefaultAgencyIdFieldMappingFactory.class)
+      mapping = DefaultAgencyIdFieldMappingFactory.class,
+      alwaysIncludeInOutput = true)
   private AgencyAndId toTimeframeGroupId;
 
   public AgencyAndId getLegGroupId() {

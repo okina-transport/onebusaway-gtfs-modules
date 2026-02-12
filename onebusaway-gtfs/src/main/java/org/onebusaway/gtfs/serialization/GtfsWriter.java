@@ -36,6 +36,8 @@ public class GtfsWriter extends CsvEntityWriter {
 
   private File _outputLocation = null;
 
+  private boolean keepOptionalFields = false;
+
   public void setOutputLocation(File path) {
     super.setOutputLocation(path);
     _outputLocation = path;
@@ -65,10 +67,12 @@ public class GtfsWriter extends CsvEntityWriter {
     List<Class<?>> classes = getEntityClasses();
 
     for (Class<?> entityClass : classes) {
-      _log.info("writing entities: " + entityClass.getName());
+      _log.info("writing entities: {}", entityClass.getName());
       Collection<Object> entities =
           sortEntities(entityClass, dao.getAllEntitiesForType(entityClass));
-      excludeOptionalAndMissingFields(entityClass, entities);
+      if (!keepOptionalFields) {
+        excludeOptionalAndMissingFields(entityClass, entities);
+      }
       for (Object entity : entities) handleEntity(entity);
       flush();
     }
@@ -95,5 +99,9 @@ public class GtfsWriter extends CsvEntityWriter {
 
   protected DefaultEntitySchemaFactory createEntitySchemaFactory() {
     return GtfsEntitySchemaFactory.createEntitySchemaFactory();
+  }
+
+  public void setKeepOptionalFields(boolean keepOptionalFields) {
+    this.keepOptionalFields = keepOptionalFields;
   }
 }
