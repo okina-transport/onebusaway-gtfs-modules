@@ -408,6 +408,11 @@ public class GtfsDataServiceImpl implements GtfsDataService {
   }
 
   @Override
+  public List<Transfer> getTransfersForTrip(Trip trip) {
+    return _dao.getTransfersForTrip(trip);
+  }
+
+  @Override
   public Set<AgencyAndId> getServiceIds() {
     return _calendarService.getServiceIds();
   }

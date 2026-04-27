@@ -121,4 +121,9 @@ public interface GtfsRelationalDao extends GtfsDao {
    * {@link Ridership}
    */
   public List<Ridership> getRidershipForTrip(AgencyAndId tripId);
+
+  /***
+   * {@link Transfer}
+   */
+  public List<Transfer> getTransfersForTrip(Trip trip);
 }

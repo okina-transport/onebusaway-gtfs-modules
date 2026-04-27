@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.collections4.CollectionUtils;
 import org.onebusaway.csv_entities.exceptions.EntityInstantiationException;
 import org.onebusaway.csv_entities.schema.BeanWrapper;
 import org.onebusaway.csv_entities.schema.BeanWrapperFactory;
@@ -332,6 +333,21 @@ public class GtfsRelationalDaoImpl extends GtfsDaoImpl implements GtfsMutableRel
       }
     }
     return _ridershipByTrip.get(tripId);
+  }
+
+  @Override
+  public List<Transfer> getTransfersForTrip(Trip trip) {
+    Collection<Transfer> transfers = getAllTransfers();
+    if (CollectionUtils.isEmpty(transfers)) {
+      return Collections.emptyList();
+    }
+    List<Transfer> result = new ArrayList<>();
+    for (Transfer transfer : transfers) {
+      if (transfer.getFromTrip().equals(trip) || transfer.getToTrip().equals(trip)) {
+        result.add(transfer);
+      }
+    }
+    return result;
   }
 
   /****

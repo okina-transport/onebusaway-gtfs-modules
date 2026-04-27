@@ -82,5 +82,8 @@
     <query name="ridershipsForTripId" read-only="true">
         FROM Ridership r WHERE r.tripId = :tripId
     </query>
+    <query name="transfersForTrip" read-only="true">
+        FROM Transfer t WHERE t.fromTrip = :trip or t.toTrip = :trip
+    </query>
 
 </hibernate-mapping>

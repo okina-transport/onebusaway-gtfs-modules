@@ -13,17 +13,7 @@
  */
 package org.onebusaway.gtfs_transformer.impl;
 
-import org.onebusaway.gtfs.model.Agency;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.FeedInfo;
-import org.onebusaway.gtfs.model.Frequency;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.ServiceCalendar;
-import org.onebusaway.gtfs.model.ServiceCalendarDate;
-import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.StopTime;
-import org.onebusaway.gtfs.model.Transfer;
-import org.onebusaway.gtfs.model.Trip;
+import org.onebusaway.gtfs.model.*;
 import org.onebusaway.gtfs.services.GtfsMutableRelationalDao;
 
 public class RemoveEntityLibrary {
@@ -41,6 +31,7 @@ public class RemoveEntityLibrary {
   public void removeTrip(GtfsMutableRelationalDao dao, Trip trip) {
     for (StopTime stopTime : dao.getStopTimesForTrip(trip)) removeStopTime(dao, stopTime);
     for (Frequency frequency : dao.getFrequenciesForTrip(trip)) removeFrequency(dao, frequency);
+    for (Transfer transfer : dao.getTransfersForTrip(trip)) removeTransfer(dao, transfer);
     dao.removeEntity(trip);
   }
 
@@ -85,5 +76,22 @@ public class RemoveEntityLibrary {
 
   public void removeFeedInfo(GtfsMutableRelationalDao dao, FeedInfo feedInfo) {
     dao.removeEntity(feedInfo);
+  }
+
+  public void removeLocation(GtfsMutableRelationalDao dao, Location location) {
+    dao.removeEntity(location);
+  }
+
+  public void removeLocationGroup(GtfsMutableRelationalDao dao, LocationGroup locationGroup) {
+    dao.removeEntity(locationGroup);
+  }
+
+  public void removeBookingRule(GtfsMutableRelationalDao dao, BookingRule bookingRule) {
+    dao.removeEntity(bookingRule);
+  }
+
+  public void removeLocationGroupElement(
+      GtfsMutableRelationalDao dao, LocationGroupElement locationGroupElement) {
+    dao.removeEntity(locationGroupElement);
   }
 }
