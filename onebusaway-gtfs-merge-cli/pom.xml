@@ -3,7 +3,7 @@
   <parent>
     <artifactId>onebusaway-gtfs-modules</artifactId>
     <groupId>org.onebusaway</groupId>
-    <version>11.2.3-mobi-iti</version>
+    <version>11.2.4-mobi-iti</version>
     <relativePath>..</relativePath>
   </parent>
   <artifactId>onebusaway-gtfs-merge-cli</artifactId>
