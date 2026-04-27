@@ -1,5 +1,6 @@
 package org.onebusaway.gtfs_transformer.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -63,6 +64,15 @@ public class FilterGtfsFlexStrategy implements GtfsTransformStrategy {
     for (Trip trip : tripsToRemove) {
       LOGGER.info("Removing trip id {}", trip.getId().getId());
       REMOVE_ENTITY_LIBRARY.removeTrip(dao, trip);
+    }
+
+    var routes = new ArrayList<>(dao.getAllRoutes());
+    for (var route : routes) {
+      var trips = dao.getTripsForRoute(route);
+      if (tripsToRemove.containsAll(trips)) {
+        LOGGER.info("Removing route id {}", route.getId().getId());
+        REMOVE_ENTITY_LIBRARY.removeRoute(dao, route);
+      }
     }
   }
 }
