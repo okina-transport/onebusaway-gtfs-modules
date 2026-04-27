@@ -15,13 +15,7 @@ package org.onebusaway.gtfs.serialization;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.onebusaway.csv_entities.CsvEntityWriter;
 import org.onebusaway.csv_entities.schema.DefaultEntitySchemaFactory;
 import org.onebusaway.gtfs.services.GtfsDao;
@@ -32,7 +26,7 @@ public class GtfsWriter extends CsvEntityWriter {
 
   private final Logger _log = LoggerFactory.getLogger(GtfsWriter.class);
 
-  private List<Class<?>> _entityClasses = new ArrayList<>();
+  private Set<Class<?>> _entityClasses = new HashSet<>();
 
   private File _outputLocation = null;
 
@@ -54,7 +48,7 @@ public class GtfsWriter extends CsvEntityWriter {
     setEntitySchemaFactory(schemaFactory);
   }
 
-  public List<Class<?>> getEntityClasses() {
+  public Set<Class<?>> getEntityClasses() {
     return _entityClasses;
   }
 
@@ -64,7 +58,7 @@ public class GtfsWriter extends CsvEntityWriter {
 
   public void run(GtfsDao dao) throws IOException {
 
-    List<Class<?>> classes = getEntityClasses();
+    Set<Class<?>> classes = getEntityClasses();
 
     for (Class<?> entityClass : classes) {
       _log.info("writing entities: {}", entityClass.getName());
