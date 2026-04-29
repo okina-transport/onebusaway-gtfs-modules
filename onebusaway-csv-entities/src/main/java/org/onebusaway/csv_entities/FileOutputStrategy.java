@@ -33,6 +33,7 @@ class FileOutputStrategy implements OutputStrategy {
   private final File _outputDirectory;
 
   private Map<Class<?>, IndividualCsvEntityWriter> _writersByType = new HashMap<>();
+  private Map<Class<?>, PrintWriter> _writersByClass = new HashMap<>();
 
   public FileOutputStrategy(File outputDirectory) {
     _outputDirectory = outputDirectory;
@@ -57,13 +58,29 @@ class FileOutputStrategy implements OutputStrategy {
   }
 
   @Override
+  public PrintWriter getGeojsonEntityWriter(Class<?> entityType) throws IOException {
+    PrintWriter writer = _writersByClass.get(entityType);
+    if (writer == null) {
+      File outputFile = new File(_outputDirectory, "locations.geojson");
+      writer = openOutput(outputFile, entityType);
+
+      if (!_outputDirectory.exists()) _outputDirectory.mkdirs();
+
+      _writersByClass.put(entityType, writer);
+    }
+    return writer;
+  }
+
+  @Override
   public void flush() {
     for (IndividualCsvEntityWriter writer : _writersByType.values()) writer.flush();
+    for (PrintWriter writer : _writersByClass.values()) writer.flush();
   }
 
   @Override
   public void close() throws IOException {
     for (IndividualCsvEntityWriter writer : _writersByType.values()) writer.close();
+    for (PrintWriter writer : _writersByClass.values()) writer.close();
   }
 
   private PrintWriter openOutput(File outputFile, Class<?> entityType) {

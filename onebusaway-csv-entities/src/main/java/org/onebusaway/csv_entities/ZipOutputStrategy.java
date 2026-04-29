@@ -91,6 +91,30 @@ class ZipOutputStrategy implements OutputStrategy {
   }
 
   @Override
+  public PrintWriter getGeojsonEntityWriter(Class<?> entityType) throws IOException {
+    if (_currentType != null && _currentType.equals(entityType)) {
+      return _writer;
+    }
+    closeCurrentEntityWriter();
+    if (!_typesWeHaveAlreadySeen.add(entityType)) {
+      throw new IllegalStateException(
+          "When writing to a ZIP output feed, entities cannot be written in arbitrary order "
+              + "but must be grouped by type.  You have attempted to write an entity of type "
+              + entityType
+              + " but the zip entry for that type has already been closed.");
+    }
+
+    _currentType = entityType;
+    ZipEntry entry = new ZipEntry("locations.geojson");
+    try {
+      _out.putNextEntry(entry);
+    } catch (IOException ex) {
+      throw new CsvException("Error opening zip entry", ex);
+    }
+    return _writer;
+  }
+
+  @Override
   public void flush() throws IOException {
     _out.flush();
   }

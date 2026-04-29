@@ -27,7 +27,7 @@ public class CsvEntityWriter implements EntityHandler {
 
   private CsvEntityContext _context = new CsvEntityContextImpl();
 
-  private OutputStrategy _outputStrategy = null;
+  public OutputStrategy outputStrategy = null;
 
   public EntitySchemaFactory getEntitySchemaFactory() {
     return _entitySchemaFactory;
@@ -39,9 +39,9 @@ public class CsvEntityWriter implements EntityHandler {
 
   public void setOutputLocation(File path) {
     if (path.getName().endsWith(".zip")) {
-      _outputStrategy = ZipOutputStrategy.create(path);
+      outputStrategy = ZipOutputStrategy.create(path);
     } else {
-      _outputStrategy = new FileOutputStrategy(path);
+      outputStrategy = new FileOutputStrategy(path);
     }
   }
 
@@ -57,16 +57,15 @@ public class CsvEntityWriter implements EntityHandler {
     Class<?> entityType = entity.getClass();
     EntitySchemaFactory schemaFactory =
         _excludeOptionalAndMissing != null ? _excludeOptionalAndMissing : _entitySchemaFactory;
-    IndividualCsvEntityWriter writer =
-        _outputStrategy.getEntityWriter(schemaFactory, _context, entityType);
+    EntityHandler writer = outputStrategy.getEntityWriter(schemaFactory, _context, entityType);
     writer.handleEntity(entity);
   }
 
   public void flush() throws IOException {
-    _outputStrategy.flush();
+    outputStrategy.flush();
   }
 
   public void close() throws IOException {
-    _outputStrategy.close();
+    outputStrategy.close();
   }
 }

@@ -14,21 +14,20 @@
 package org.onebusaway.gtfs.model;
 
 import org.geojson.GeoJsonObject;
+import org.onebusaway.csv_entities.schema.annotations.CsvField;
 import org.onebusaway.csv_entities.schema.annotations.CsvFields;
 
 @CsvFields(filename = "locations.geojson", required = false)
 public class Location extends IdentityBean<AgencyAndId> implements StopLocation {
   private AgencyAndId id;
 
+  @CsvField(optional = true)
   private String name;
 
   private GeoJsonObject geometry;
 
-  private String zoneId;
-
-  private String description;
-
-  private String url;
+  @CsvField(optional = true)
+  private String desc;
 
   @Override
   public AgencyAndId getId() {
@@ -56,27 +55,11 @@ public class Location extends IdentityBean<AgencyAndId> implements StopLocation 
     this.geometry = geometry;
   }
 
-  public String getZoneId() {
-    return zoneId;
+  public String getDesc() {
+    return desc;
   }
 
-  public void setZoneId(String zoneId) {
-    this.zoneId = zoneId;
-  }
-
-  public String getUrl() {
-    return url;
-  }
-
-  public void setUrl(String url) {
-    this.url = url;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
+  public void setDesc(String desc) {
+    this.desc = desc;
   }
 }

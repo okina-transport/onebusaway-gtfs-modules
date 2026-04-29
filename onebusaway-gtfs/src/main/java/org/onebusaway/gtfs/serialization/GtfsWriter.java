@@ -15,9 +15,11 @@ package org.onebusaway.gtfs.serialization;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 import org.onebusaway.csv_entities.CsvEntityWriter;
 import org.onebusaway.csv_entities.schema.DefaultEntitySchemaFactory;
+import org.onebusaway.gtfs.model.Location;
 import org.onebusaway.gtfs.services.GtfsDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,10 +66,16 @@ public class GtfsWriter extends CsvEntityWriter {
       _log.info("writing entities: {}", entityClass.getName());
       Collection<Object> entities =
           sortEntities(entityClass, dao.getAllEntitiesForType(entityClass));
-      if (!keepOptionalFields) {
-        excludeOptionalAndMissingFields(entityClass, entities);
+      if (Location.class.equals(entityClass)) {
+        PrintWriter printWriter = outputStrategy.getGeojsonEntityWriter(entityClass);
+        LocationsGeoJSONWriter locationsGeoJSONWriter = new LocationsGeoJSONWriter(printWriter);
+        locationsGeoJSONWriter.write(entities);
+      } else {
+        if (!keepOptionalFields) {
+          excludeOptionalAndMissingFields(entityClass, entities);
+        }
+        for (Object entity : entities) handleEntity(entity);
       }
-      for (Object entity : entities) handleEntity(entity);
       flush();
     }
 

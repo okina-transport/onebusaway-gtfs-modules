@@ -54,7 +54,7 @@ public class RemoveFlexStrategy implements GtfsTransformStrategy {
 
     var locations = new ArrayList<>(dao.getAllLocations());
     for (var location : locations) {
-      LOGGER.info("Removing location id {}", location.getId().getId());
+      LOGGER.info("Removing location id {}", location.getId());
       REMOVE_ENTITY_LIBRARY.removeLocation(dao, location);
     }
 

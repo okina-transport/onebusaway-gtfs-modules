@@ -14,6 +14,7 @@
 package org.onebusaway.csv_entities;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import org.onebusaway.csv_entities.schema.EntitySchemaFactory;
 
 /**
@@ -22,10 +23,12 @@ import org.onebusaway.csv_entities.schema.EntitySchemaFactory;
  *
  * @author bdferris
  */
-interface OutputStrategy {
+public interface OutputStrategy {
 
-  public IndividualCsvEntityWriter getEntityWriter(
+  public EntityHandler getEntityWriter(
       EntitySchemaFactory entitySchemaFactory, CsvEntityContext context, Class<?> entityType);
+
+  public PrintWriter getGeojsonEntityWriter(Class<?> entityType) throws IOException;
 
   public void flush() throws IOException;
 
