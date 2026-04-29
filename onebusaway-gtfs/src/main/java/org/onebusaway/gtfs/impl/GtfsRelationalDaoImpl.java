@@ -343,7 +343,7 @@ public class GtfsRelationalDaoImpl extends GtfsDaoImpl implements GtfsMutableRel
     }
     List<Transfer> result = new ArrayList<>();
     for (Transfer transfer : transfers) {
-      if (transfer.getFromTrip().equals(trip) || transfer.getToTrip().equals(trip)) {
+      if (trip.equals(transfer.getFromTrip()) || trip.equals(transfer.getToTrip())) {
         result.add(transfer);
       }
     }
