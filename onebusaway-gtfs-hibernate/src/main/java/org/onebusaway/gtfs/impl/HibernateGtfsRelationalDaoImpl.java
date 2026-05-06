@@ -291,8 +291,7 @@ public class HibernateGtfsRelationalDaoImpl implements GtfsMutableRelationalDao 
                     .map(
                         stopLocation -> {
                           LocationGroupElement locationGroupElement = new LocationGroupElement();
-                          locationGroupElement.setLocationGroupId(group.getId());
-                          locationGroupElement.setName(group.getName());
+                          locationGroupElement.setLocationGroup(group);
                           locationGroupElement.setStop(stopLocation);
                           return locationGroupElement;
                         }))

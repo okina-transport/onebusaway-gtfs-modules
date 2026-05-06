@@ -16,40 +16,38 @@ package org.onebusaway.gtfs.model;
 import java.io.Serial;
 import org.onebusaway.csv_entities.schema.annotations.CsvField;
 import org.onebusaway.csv_entities.schema.annotations.CsvFields;
-import org.onebusaway.gtfs.serialization.mappings.DefaultAgencyIdFieldMappingFactory;
+import org.onebusaway.gtfs.serialization.mappings.EntityFieldMappingFactory;
 import org.onebusaway.gtfs.serialization.mappings.StopLocationFieldMappingFactory;
 
-@CsvFields(filename = "location_group_stops.txt", required = false, prefix = "location_group_")
-public class LocationGroupElement extends IdentityBean<Integer> {
+@CsvFields(filename = "location_group_stops.txt", required = false)
+public class LocationGroupElement extends IdentityBean<AgencyAndId> {
 
   @Serial private static final long serialVersionUID = 1L;
 
-  private int id;
-
-  @CsvField(name = "location_group_id", mapping = DefaultAgencyIdFieldMappingFactory.class)
-  private AgencyAndId locationGroupId;
+  @CsvField(name = "location_group_id", mapping = EntityFieldMappingFactory.class)
+  private LocationGroup locationGroup;
 
   @CsvField(name = "stop_id", mapping = StopLocationFieldMappingFactory.class)
   private StopLocation stop;
 
-  @CsvField(optional = true)
-  private String name;
+  @Override
+  public AgencyAndId getId() {
+    return new AgencyAndId(
+        locationGroup.getId().getAgencyId(),
+        String.format("%s_%s", locationGroup.getId().getId(), stop.getId().getId()));
+  }
 
   @Override
-  public Integer getId() {
-    return id;
+  public void setId(AgencyAndId id) {
+    // id is generated dynamically
   }
 
-  public void setId(Integer id) {
-    this.id = id;
+  public LocationGroup getLocationGroup() {
+    return locationGroup;
   }
 
-  public AgencyAndId getLocationGroupId() {
-    return locationGroupId;
-  }
-
-  public void setLocationGroupId(AgencyAndId locationGroupId) {
-    this.locationGroupId = locationGroupId;
+  public void setLocationGroup(LocationGroup locationGroup) {
+    this.locationGroup = locationGroup;
   }
 
   public StopLocation getStop() {
@@ -58,13 +56,5 @@ public class LocationGroupElement extends IdentityBean<Integer> {
 
   public void setStop(StopLocation stop) {
     this.stop = stop;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
   }
 }
