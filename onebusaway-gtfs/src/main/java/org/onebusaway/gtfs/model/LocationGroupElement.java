@@ -20,14 +20,12 @@ import org.onebusaway.gtfs.serialization.mappings.DefaultAgencyIdFieldMappingFac
 import org.onebusaway.gtfs.serialization.mappings.StopLocationFieldMappingFactory;
 
 @CsvFields(filename = "location_group_stops.txt", required = false, prefix = "location_group_")
-public class LocationGroupElement extends IdentityBean<Integer> {
+public class LocationGroupElement extends IdentityBean<AgencyAndId> {
 
   @Serial private static final long serialVersionUID = 1L;
 
-  private int id;
-
   @CsvField(name = "location_group_id", mapping = DefaultAgencyIdFieldMappingFactory.class)
-  private AgencyAndId locationGroupId;
+  private AgencyAndId id;
 
   @CsvField(name = "stop_id", mapping = StopLocationFieldMappingFactory.class)
   private StopLocation stop;
@@ -36,20 +34,12 @@ public class LocationGroupElement extends IdentityBean<Integer> {
   private String name;
 
   @Override
-  public Integer getId() {
+  public AgencyAndId getId() {
     return id;
   }
 
-  public void setId(Integer id) {
+  public void setId(AgencyAndId id) {
     this.id = id;
-  }
-
-  public AgencyAndId getLocationGroupId() {
-    return locationGroupId;
-  }
-
-  public void setLocationGroupId(AgencyAndId locationGroupId) {
-    this.locationGroupId = locationGroupId;
   }
 
   public StopLocation getStop() {
