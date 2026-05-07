@@ -32,19 +32,19 @@ public final class BookingRule extends IdentityBean<AgencyAndId> {
   @CsvField(name = "booking_type")
   private int type;
 
-  @CsvField(optional = true)
+  @CsvField(optional = true, defaultValue = "-999")
   private int priorNoticeDurationMin = NO_VALUE;
 
-  @CsvField(optional = true)
+  @CsvField(optional = true, defaultValue = "-999")
   private int priorNoticeDurationMax = NO_VALUE;
 
-  @CsvField(optional = true)
+  @CsvField(optional = true, defaultValue = "-999")
   private int priorNoticeLastDay = NO_VALUE;
 
   @CsvField(optional = true, mapping = StopTimeFieldMappingFactory.class)
   private int priorNoticeLastTime = NO_VALUE;
 
-  @CsvField(optional = true)
+  @CsvField(optional = true, defaultValue = "-999")
   private int priorNoticeStartDay = NO_VALUE;
 
   @CsvField(optional = true, mapping = StopTimeFieldMappingFactory.class)
