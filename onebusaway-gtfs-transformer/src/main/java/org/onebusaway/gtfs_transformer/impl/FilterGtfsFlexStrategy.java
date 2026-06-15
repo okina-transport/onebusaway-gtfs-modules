@@ -22,14 +22,6 @@ public class FilterGtfsFlexStrategy implements GtfsTransformStrategy {
           return true;
         }
 
-        if (stopTime.getPickupType() == 2 || stopTime.getPickupType() == 3) {
-          return true;
-        }
-
-        if (stopTime.getDropOffType() == 2 || stopTime.getDropOffType() == 3) {
-          return true;
-        }
-
         if (stopTime.getContinuousPickup() == 2 || stopTime.getContinuousPickup() == 3) {
           return true;
         }
