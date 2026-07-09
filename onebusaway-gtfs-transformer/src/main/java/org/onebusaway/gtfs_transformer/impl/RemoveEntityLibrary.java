@@ -13,6 +13,7 @@
  */
 package org.onebusaway.gtfs_transformer.impl;
 
+import java.util.Iterator;
 import org.onebusaway.gtfs.model.*;
 import org.onebusaway.gtfs.services.GtfsMutableRelationalDao;
 
@@ -24,7 +25,28 @@ public class RemoveEntityLibrary {
   }
 
   public void removeRoute(GtfsMutableRelationalDao dao, Route route) {
-    for (Trip trip : dao.getTripsForRoute(route)) removeTrip(dao, trip);
+    for (Trip trip : dao.getTripsForRoute(route)) {
+      removeTrip(dao, trip);
+    }
+    for (FareRule fareRule : dao.getFareRulesForRoute(route)) {
+      dao.removeEntity(fareRule);
+    }
+    Iterator<Transfer> transferIterator = dao.getAllTransfers().iterator();
+    while (transferIterator.hasNext()) {
+      Transfer currentTransfer = transferIterator.next();
+      if (currentTransfer.getFromRoute().getId().getId().equals(route.getId().getId())
+          || currentTransfer.getToRoute().getId().getId().equals(route.getId().getId())) {
+        transferIterator.remove();
+      }
+    }
+    Iterator<RouteNetworkAssignment> routeNetworkIterator =
+        dao.getAllRouteNetworkAssignments().iterator();
+    while (routeNetworkIterator.hasNext()) {
+      RouteNetworkAssignment currentRouteNetwork = routeNetworkIterator.next();
+      if (currentRouteNetwork.getRoute().getId().getId().equals(route.getId().getId())) {
+        routeNetworkIterator.remove();
+      }
+    }
     dao.removeEntity(route);
   }
 

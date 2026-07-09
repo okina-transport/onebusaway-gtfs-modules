@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.onebusaway.gtfs.model.IdentityBean;
 import org.onebusaway.gtfs.services.GenericMutableDao;
 import org.slf4j.Logger;
@@ -29,9 +30,10 @@ public class GenericDaoImpl implements GenericMutableDao {
 
   private final Logger _log = LoggerFactory.getLogger(GenericDaoImpl.class);
 
-  private final Map<Class<?>, Map<Object, Object>> _entitiesByClassAndId = new HashMap<>();
+  private final Map<Class<?>, Map<Object, Object>> _entitiesByClassAndId =
+      new ConcurrentHashMap<>();
 
-  private final Map<Class<?>, EntityHandler<Serializable>> _handlers = new HashMap<>();
+  private final Map<Class<?>, EntityHandler<Serializable>> _handlers = new ConcurrentHashMap<>();
 
   private boolean _generateIds = true;
 
