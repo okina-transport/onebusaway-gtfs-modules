@@ -22,12 +22,11 @@ import org.onebusaway.csv_entities.schema.DefaultEntitySchemaFactory;
 import org.onebusaway.csv_entities.schema.EntitySchemaFactoryHelper;
 import org.onebusaway.csv_entities.schema.beans.CsvEntityMappingBean;
 import org.onebusaway.gtfs.model.*;
-import org.onebusaway.gtfs.serialization.comparators.ServiceCalendarComparator;
-import org.onebusaway.gtfs.serialization.comparators.ServiceCalendarDateComparator;
-import org.onebusaway.gtfs.serialization.comparators.ShapePointComparator;
-import org.onebusaway.gtfs.serialization.comparators.StopTimeComparator;
+import org.onebusaway.gtfs.serialization.comparators.*;
 
 public class GtfsEntitySchemaFactory {
+
+  private GtfsEntitySchemaFactory() {}
 
   public static List<Class<?>> getEntityClasses() {
     List<Class<?>> entityClasses = new ArrayList<>();
@@ -68,23 +67,24 @@ public class GtfsEntitySchemaFactory {
     entityClasses.add(Icon.class);
     entityClasses.add(Network.class);
     entityClasses.add(Timeframe.class);
+    entityClasses.add(Translation.class);
     return entityClasses;
   }
 
   public static Map<Class<?>, Comparator<?>> getEntityComparators() {
     Map<Class<?>, Comparator<?>> comparators = new HashMap<>();
-    comparators.put(Agency.class, getComparatorForIdentityBeanType(Agency.class));
-    comparators.put(Area.class, getComparatorForIdentityBeanType(Area.class));
-    comparators.put(Block.class, getComparatorForIdentityBeanType(Block.class));
-    comparators.put(Route.class, getComparatorForIdentityBeanType(Route.class));
-    comparators.put(Stop.class, getComparatorForIdentityBeanType(Stop.class));
-    comparators.put(Trip.class, getComparatorForIdentityBeanType(Trip.class));
+    comparators.put(Agency.class, new IdentityBeanStringComparator());
+    comparators.put(Area.class, new IdentityBeanAgencyAndIdComparator());
+    comparators.put(Block.class, new IdentityBeanIntegerComparator());
+    comparators.put(Route.class, new IdentityBeanAgencyAndIdComparator());
+    comparators.put(Stop.class, new IdentityBeanAgencyAndIdComparator());
+    comparators.put(Trip.class, new IdentityBeanAgencyAndIdComparator());
     comparators.put(StopTime.class, new StopTimeComparator());
     comparators.put(ShapePoint.class, new ShapePointComparator());
     comparators.put(ServiceCalendar.class, new ServiceCalendarComparator());
     comparators.put(ServiceCalendarDate.class, new ServiceCalendarDateComparator());
-    comparators.put(Vehicle.class, getComparatorForIdentityBeanType(Vehicle.class));
-    comparators.put(Icon.class, getComparatorForIdentityBeanType(Icon.class));
+    comparators.put(Vehicle.class, new IdentityBeanAgencyAndIdComparator());
+    comparators.put(Icon.class, new IdentityBeanAgencyAndIdComparator());
     return comparators;
   }
 
@@ -97,18 +97,5 @@ public class GtfsEntitySchemaFactory {
     helper.addIgnorableField(agencyId, "agencyId");
 
     return factory;
-  }
-
-  private static <T extends IdentityBean<?>> Comparator<T> getComparatorForIdentityBeanType(
-      Class<T> entityType) {
-    return new Comparator<>() {
-      @SuppressWarnings("unchecked")
-      @Override
-      public int compare(T o1, T o2) {
-        Comparable<Object> a = (Comparable<Object>) o1.getId();
-        Comparable<Object> b = (Comparable<Object>) o2.getId();
-        return a.compareTo(b);
-      }
-    };
   }
 }
