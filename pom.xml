@@ -3,7 +3,7 @@
 
   <groupId>org.onebusaway</groupId>
   <artifactId>onebusaway-gtfs-modules</artifactId>
-  <version>11.2.7-mobi-iti</version>
+  <version>11.2.8-mobi-iti-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>onebusaway-gtfs-modules</name>
